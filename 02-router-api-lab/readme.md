@@ -18,9 +18,9 @@ In this exercise we will be a space mission website that will inform astronauts 
 
 4. Next let's import Bootstrap a front-end framework that provides CSS code to make our project beautiful. In terminal type `npm i bootstrap@5.2.3`. This will install the package into our project.
 
-## Install React Router DOM and `axios`
+## Install React Router DOM
 
-5. Import React Router DOM. In terminal type `npm i react-router-dom axios`. This will install the packages into our project.
+5. Import React Router DOM. In terminal type `npm i react-router-dom`. This will install the package into our project.
 
 ## Start Node Test Server
 
@@ -30,7 +30,7 @@ In this exercise we will be a space mission website that will inform astronauts 
 
 7. Then in VS Code, open the **/src/index.js** file and import the bootstrap css like by typing the following line `import 'bootstrap/dist/css/bootstrap.css';` placing it just after the import for ReactDOM and just before our import for **Index.css**.
 
-## Import BrowserRouter
+## Import And Use BrowserRouter
 
 8. On **index.js** import the Browser Router by typing the following line `import { BrowserRouter } from 'react-router-dom';` placing it just after the import for **App.js**. Then, wrap the App component in `<BrowserRouter></BrowserRouter>` tags.
 
@@ -501,16 +501,13 @@ This will be a special component that will pull down images from the NASA API.
 
 43. Open the **/src/Gallery.js** file and create the functional component scaffolding. Name the component `Gallery`.
 
-44. Import and use `useEffect` to make an API call when the component renders, and import the loading screen:
+44. Import and use `useEffect` to make an API call when the component renders and `useState` to hold the photos we get back.
 
 ```jsx
-import React, { useEffect } from "react";
-import Spinner from "./components/Spinner/Spinner";
+import { useEffect, useState } from "react";
 ```
 
-Here we are creating some state to hold the photos when they are received from our API.
-
-45. Fill the empty `render()` with the following JSX elements:
+45. Fill the empty `return` statement with the following JSX elements:
 
 ```jsx
 <div className="col-12">
@@ -518,45 +515,49 @@ Here we are creating some state to hold the photos when they are received from o
   <p>
     These are the last known images the Rover had taken before going offline.
   </p>
-  <div className="row">{!loading && data ? "photo" : <Spinner />}</div>
+  <div className="row">{photos.length > 0 && "photos"}</div>
 </div>
 ```
 
-Here we are checking the length of the photos array we hold in state. If it is empty then we will display our loading element `Spinner`. Otherwise for the time being we will just show some text that says Photo as a placeholder until we create our Photo component.
+Here we are checking the length of the photos array we hold in state. If it is has any elements in it, we will display some text that says "photos" as a placeholder until we create our Photo component.
 
-46. Next, import our custom hook `useAxios` and call it in a `useEffect`:
+46. Next, let's create a `useEffect` hook to make an API call to the NASA API. We will also use the `useState` hook to hold the photos we get back from the API.
 
-```javascript
-import useAxios from "./hooks/useAxios";
-// ...
-
-const [setUrl, data, loading, setLoading] = useAxios();
-
+```jsx
 useEffect(() => {
-  setUrl(
-    "https://api.nasa.gov/mars-photos/api/v1/rovers/curiosity/photos?sol=1000&api_key=Lc6mCmy8pmn55pfWyTeOUCytfdZvsJsUqRhtowWL"
-  );
-  setLoading(false);
+  async function fetchPhotos() {
+    const response = await fetch(
+      "https://api.nasa.gov/mars-photos/api/v1/rovers/curiosity/photos?sol=1000&api_key=Lc6mCmy8pmn55pfWyTeOUCytfdZvsJsUqRhtowWL"
+    );
+
+    const data = await response.json();
+    setPhotos(data.photos);
+  }
+
+  fetchPhotos();
 }, []);
 ```
 
-Here we are fetching from the free public NASA API which will pull down recent images from the Mars rover. It will happen on component render because we are using an empty bracket in our `useEffect()`. After it gets the images, the turnary operator will be activated and render `'Photo'` instead of the `Spinner`.
+Here we are fetching from the free public NASA API, which will pull down recent images from the Mars rover. It will happen on only the first component render, because we are using an empty dependencies array in our `useEffect` call. After it gets the images, it will set the photos in state.
 
 The full Gallery code currently looks like this:
 
 ```jsx
-import React, { useState, useEffect } from "react";
-import Spinner from "./components/Spinner/Spinner";
-import useAxios from "./hooks/useAxios";
+import { useEffect, useState } from "react";
 
 function Gallery() {
-  const [setUrl, data, loading, setLoading] = useAxios();
-
+  const [photos, setPhotos] = useState([]);
   useEffect(() => {
-    setUrl(
-      "https://api.nasa.gov/mars-photos/api/v1/rovers/curiosity/photos?sol=1000&api_key=Lc6mCmy8pmn55pfWyTeOUCytfdZvsJsUqRhtowWL"
-    );
-    setLoading(false);
+    async function fetchPhotos() {
+      const response = await fetch(
+        "https://api.nasa.gov/mars-photos/api/v1/rovers/curiosity/photos?sol=1000&api_key=Lc6mCmy8pmn55pfWyTeOUCytfdZvsJsUqRhtowWL"
+      );
+
+      const data = await response.json();
+      setPhotos(data.photos);
+    }
+
+    fetchPhotos();
   }, []);
 
   return (
@@ -566,7 +567,7 @@ function Gallery() {
         These are the last known images the Rover had taken before going
         offline.
       </p>
-      <div className="row">{!loading && data ? "photo" : <Spinner />}</div>
+      <div className="row">{photos.length > 0 && "photos"}</div>
     </div>
   );
 }
@@ -588,27 +589,27 @@ This will be a simple functional component to display an image for each photo in
 
 49. From the File Explorer from the left side panel **right click** on the **/src/** folder and select **New File**. Name the file `Photo.js`.
 
-50. Open the **/src/Photo.js** file and create the basic functional component scaffolding. Name the function `Photo`.
+50. Open the **/src/Photo.js** file and create the basic functional component scaffolding. Name the function `Photo`. Don't forget to export it.
 
-51. Pass the prop object `data` into the function `function Photo(data) {`. This will make props accessible inside of our functional component.
+51. Pass the prop object into the function `function Photo(props) {`. This will make props accessible inside of our functional component.
 
 52. Replace the empty `return()` the following elements:
 
 ```jsx
 <div className="col-sm-2">
-  <img src={data.photo.img_src} alt="Mars" className="img-fluid" />
-  <small>{data.photo.earth_date}</small>
+  <img src={props.data.img_src} alt="Mars" className="img-fluid" />
+  <small>{props.data.earth_date}</small>
 </div>
 ```
 
 The finished Photo code should look like this:
 
 ```jsx
-function Photo(data) {
+function Photo(props.data) {
   return (
     <div className="col-sm-2">
-      <img src={data.photo.img_src} alt="Mars" className="img-fluid" />
-      <small>{data.photo.earth_date}</small>
+      <img src={props.data.img_src} alt="Mars" className="img-fluid" />
+      <small>{props.data.earth_date}</small>
     </div>
   );
 }
@@ -622,36 +623,34 @@ export default Photo;
 import Photo from "./Photo";
 ```
 
-54. Then update the turnary operator in the `<div className="row">` with the following code.
+54. Then, remove the conditional check for `photos.length` and replace it with the following code:
 
 ```jsx
-{
-  !loading && data ? (
-    data.photos.map((photo) => <Photo key={photo.id} photo={photo} />)
-  ) : (
-    <Spinner />
-  );
-}
+{photos.map((photo) => (
+  <Photo key={photo.id} data={photo} />
 ```
 
-Here we are first checking if the photos array is empty if it is not then we are using map to iterate over each phot in the photos array and display a `<Photo />` component for each. If the photos array is empty we instead display our JSX loading element instead.
+Here, we are using map to iterate over each photo in the photos array and display a `<Photo />` component for each.
 
 Here is the finished Gallery code.
 
 ```jsx
-import React, { useEffect } from "react";
-import Spinner from "./components/Spinner/Spinner";
-import useAxios from "./hooks/useAxios";
+import { useEffect, useState } from "react";
 import Photo from "./Photo";
 
 function Gallery() {
-  const [setUrl, data, loading, setLoading, error] = useAxios();
-
+  const [photos, setPhotos] = useState([]);
   useEffect(() => {
-    setUrl(
-      "https://api.nasa.gov/mars-photos/api/v1/rovers/curiosity/photos?sol=1000&api_key=Lc6mCmy8pmn55pfWyTeOUCytfdZvsJsUqRhtowWL"
-    );
-    setLoading(true);
+    async function fetchPhotos() {
+      const response = await fetch(
+        "https://api.nasa.gov/mars-photos/api/v1/rovers/curiosity/photos?sol=1000&api_key=Lc6mCmy8pmn55pfWyTeOUCytfdZvsJsUqRhtowWL"
+      );
+
+      const data = await response.json();
+      setPhotos(data.photos);
+    }
+
+    fetchPhotos();
   }, []);
 
   return (
@@ -662,11 +661,9 @@ function Gallery() {
         offline.
       </p>
       <div className="row">
-        {!loading && data ? (
-          data.photos.map((photo) => <Photo key={photo.id} photo={photo} />)
-        ) : (
-          <Spinner />
-        )}
+        {photos.map((photo) => (
+          <Photo key={photo.id} data={photo} />
+        ))}
       </div>
     </div>
   );
@@ -681,8 +678,9 @@ Here is the completed App code:
 
 ```jsx
 import { Routes, Route } from "react-router-dom";
-import "./App.css";
+
 import Header from "./Header";
+import "./App.css";
 import Navbar from "./Navbar";
 import Home from "./Home";
 import Mission from "./Mission";
@@ -694,14 +692,14 @@ function App() {
     <div className="container">
       <div className="row">
         <Header />
-        <Navbar />
+        <Navbar/>
       </div>
       <div className="row">
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/mission" element={<Mission />} />
-          <Route path="/gallery" element={<Gallery />} />
-          <Route path="/contact" element={<Contact />} />
+          <Route path="/" element={<Home/>} />
+          <Route path="/mission" element={<Mission/>} />
+          <Route path="/gallery" element={<Gallery/>} />
+          <Route path="/contact" element={<Contact/>} />
         </Routes>
       </div>
     </div>
