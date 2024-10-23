@@ -605,7 +605,7 @@ This will be a simple functional component to display an image for each photo in
 The finished Photo code should look like this:
 
 ```jsx
-function Photo(props.data) {
+function Photo(props) {
   return (
     <div className="col-sm-2">
       <img src={props.data.img_src} alt="Mars" className="img-fluid" />
